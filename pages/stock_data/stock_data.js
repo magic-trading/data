@@ -55,7 +55,7 @@ async function generateCSV() {
             `${datetime.getUTCDate()}/${datetime.getUTCMonth() + 1}/${datetime.getUTCFullYear()}`,
             // datetime.toLocaleTimeString(),
             i + 1,
-            getTimeframesToGenerate()[i],
+            getTimeframeMappings()[i],
             castDecimal(lastData.bbt20),
             castDecimal(lastData.bbb20),
             castDecimal(lastData.ema20)
@@ -97,6 +97,18 @@ function getTimeframesToGenerate() {
         '5m',
         '3m',
         '1m'
+    ]
+}
+
+function getTimeframeMappings() {
+    return [
+        '1 Day',
+        '1 Hour',
+        '30 Minutes',
+        '15 Minutes',
+        '5 Minutes',
+        '3 Minutes',
+        '1 Minute'
     ]
 }
 
