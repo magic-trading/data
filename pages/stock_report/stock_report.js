@@ -2,18 +2,24 @@ import api from "../../helpers/api.js"
 import Bollinger from "../../helpers/bollinger.js"
 import emaHelper from "../../helpers/ema.js"
 
-const now = new Date();
-now.setHours( (new Date().getHours()) - (new Date().getTimezoneOffset() / 60) )
+let timeout = 0
 
-// document.getElementById('datetime').value = now.toISOString().substring(0, 16)
 document.getElementById('button').addEventListener('click', generateCSV)
 document.getElementById('copyTable').hidden = true
 document.getElementById('copyTable').addEventListener('click', ()=> copytable('tableBody'))
+
+const defaultTimeframes = ['1m', '3m', '5m', '15m', "30m", "1h"];
+
+$(document).ready(function() {
+    $('#timeframes').select2();
+    $('#timeframes').val(defaultTimeframes).trigger('change');
+});
 
 setLoaderVisibility(false)
 
 
 async function generateCSV() {
+    clearTimeout(timeout)
     setLoaderVisibility(true)
 
     const datetimeValue = document.getElementById('datetime').value
@@ -33,21 +39,21 @@ async function generateCSV() {
             getEmasToGenerate().forEach(ema => emaHelper.includeEmaValue(candlesDataSource, ema))
             new Bollinger(candlesDataSource).includeBollingerBands(20)
             
-            return candlesDataSource.slice(candlesDataSource.length - count)
+            return { timeframe, candles: candlesDataSource.slice(candlesDataSource.length - count) }
         }
     )
 
-    let data = (await Promise.all(dataPromises))
+    let data = (await Promise.all(dataPromises)).reverse()
 
     const headers = [
         'Time Frame'
     ].concat(Array.from({length: count}, (x, i) => i==0? "Ahora":""));
 
-    const rows = data.map((lastData, i) => {
-        lastData.reverse()
-        const max = Math.max(...lastData.map(c => (c.bbt20 - c.bbb20) * 0.3333));
+    const rows = data.map(({timeframe, candles}, i) => {
+        candles.reverse()
+        const max = Math.max(...candles.map(c => (c.bbt20 - c.bbb20) * 0.3333));
 
-        const min = Math.min(...lastData.map(c => (c.bbt20 - c.bbb20) * 0.3333));
+        const min = Math.min(...candles.map(c => (c.bbt20 - c.bbb20) * 0.3333));
 
         const getPercentage = (value) => {
             const range = max - min;
@@ -57,13 +63,13 @@ async function generateCSV() {
             return valueWithinRange / range
         }
 
-        const cells = lastData.map((candle) => ({
-            value: castDecimal((candle.bbt20 - candle.bbb20) * 0.3333, 4),
+        const cells = candles.map((candle) => ({
+            value: castDecimal((candle.bbt20 - candle.bbb20) * 0.3333),
             background: colorGradient(getPercentage((candle.bbt20 - candle.bbb20) * 0.3333))
         }))
 
         return [
-            getTimeframeMappings()[i]
+            getTimeframeMappings()[timeframe]
         ].concat(cells)
     })
 
@@ -84,6 +90,7 @@ async function generateCSV() {
     document.getElementById('copyTable').hidden = false
     setLoaderVisibility(false)
 
+    timeout = !datetimeValue? setTimeout(generateCSV, 3000): 0
 }
 
 
@@ -94,15 +101,7 @@ function getEmasToGenerate() {
 }
 
 function getTimeframesToGenerate() {
-    return [
-        '1d',
-        '1h',
-        '30m',
-        '15m',
-        '5m',
-        '3m',
-        '1m'
-    ]
+    return $('#timeframes').val()
 }
 
 function copytable(el) {
@@ -114,7 +113,8 @@ function copytable(el) {
     document.execCommand('copy')
 }
 
-function castDecimal(value, decimals = 2) {
+function castDecimal(value, decimals) {
+    decimals = decimals !== undefined? decimals: value > 10? 2: 4
     return `${value.toFixed(decimals)}`.replace('.', ',')
 }
 
@@ -135,8 +135,6 @@ function colorGradient(percentage) {
     let color3 = {
         red: 99, green: 190, blue: 123
     };
-
-    console.log('>> fade: ', percentage)
     var fade = percentage;
 
     // Do we have 3 colors for the gradient? Need to adjust the params.
@@ -164,15 +162,24 @@ function colorGradient(percentage) {
 }
 
 function getTimeframeMappings() {
-    return [
-        '1 Day',
-        '1 Hour',
-        '30 Minutes',
-        '15 Minutes',
-        '5 Minutes',
-        '3 Minutes',
-        '1 Minute'
-    ]
+    return {
+        "1m": "1 min",
+        "3m": "3 min",
+        "4m": "4 min",
+        "5m": "5 min",
+        "6m": "6 min",
+        "7m": "7 min",
+        "8m": "8 min",
+        "9m": "9 min",
+        "10m": "10 min",
+        "15m": "15 min",
+        "30m": "30 min",
+        "1h": "1 hora",
+        "2h": "2 horas",
+        "12h": "12 horas",
+        "1d": "1 día",
+        "1w": "1 semana",
+    }
 }
 
 

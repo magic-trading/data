@@ -7,18 +7,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Report</title>
 
-    <link rel="stylesheet" href="../../styles/main.css">
+    <link rel="stylesheet" href="main.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> 
+
+    <script
+        src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous">
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </head>
 
 <body style="font-family: Arial, Helvetica, sans-serif;">
     <div style="padding-right: 25px; padding-left: 25px;">        
         <h1>Stock report</h1>
+        <h3>Rango de negocio entre las bandas del Bollinger</h3>
 
-        <input type="datetime-local" name="" id="datetime">
+        <div style="display: flex;">
+            <div style="margin: 5px 10px;">
+                <div style="margin-bottom: 5px;" class="primary-color bold">Fecha y hora</div>
+                <input type="datetime-local" name="" id="datetime">
+            </div>
+            
+            <div style="margin: 5px 10px;">
+                <div style="margin-bottom: 5px;" class="primary-color bold">Symbol</div>
+                <input id="symbol" value="BTCUSDT" placeholder="Symbol... BTCUSDT, XRPUSDT" style="font-family: monospace;">
+            </div>
+            
+            <div style="margin: 5px 10px;">
+                <div style="margin-bottom: 5px;" class="primary-color bold">Cantidad</div>
+                <input type="number" id="count" value="12" placeholder="Cantidad de últimas" style="font-family: monospace;">
+            </div>
+        </div>
 
-        <input id="symbol" value="BTCUSDT" placeholder="Symbol... BTCUSDT, XRPUSDT" style="font-family: monospace;">
-
-        <input type="number" id="count" value="8" placeholder="Cantidad de últimas" style="font-family: monospace;">
+        <br>
+        
+        <div style="min-width: 400px; width: 50%;">
+            <div style="margin-bottom: 10px;" class="primary-color bold">Timeframes</div>
+            <select id="timeframes" name="states[]" multiple="multiple" style="width: 100%;">
+                <option value="1m">1 min</option>
+                <option value="3m">3 min</option>
+                <option value="5m">5 min</option>
+                <option value="15m">15 min</option>
+                <option value="30m">30 min</option>
+                <option value="1h">1 hora</option>
+                <option value="2h">2 horas</option>
+                <option value="12h">12 horas</option>
+                <option value="1d">1 día</option>
+                <option value="1w">1 semana</option>
+            </select>
+        </div>
 
         <br><br>
 
