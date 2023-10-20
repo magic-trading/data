@@ -103,6 +103,17 @@ input {
     box-sizing: border-box;
 }
 
+.timetag {
+  position: absolute;
+  right: -37.5px;
+  width: 45px;
+  background-color: #6f77af;
+  padding: 5px;
+  text-align: center;
+  border-radius: 5px;
+  top: 50%;
+}
+
 .loader.hidden, .loader.hidden:before, .loader.hidden:after {
     animation-play-state: paused;
 }

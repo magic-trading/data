@@ -4,11 +4,12 @@ import emaHelper from "../../helpers/ema.js"
 
 let timeout = 0
 
+// document.getElementById('datetime').value = now.toISOString().substring(0, 16)
 document.getElementById('button').addEventListener('click', generateCSV)
 document.getElementById('copyTable').hidden = true
 document.getElementById('copyTable').addEventListener('click', ()=> copytable('tableBody'))
 
-const defaultTimeframes = ['1m', '3m', '5m', '15m', "30m", "1h"];
+const defaultTimeframes = ['1m', '3m', '5m', '15m', "30m"];
 
 $(document).ready(function() {
     $('#timeframes').select2();
@@ -38,8 +39,10 @@ async function generateCSV() {
 
             getEmasToGenerate().forEach(ema => emaHelper.includeEmaValue(candlesDataSource, ema))
             new Bollinger(candlesDataSource).includeBollingerBands(20)
+
+            candlesDataSource.reverse()
             
-            return { timeframe, candles: candlesDataSource.slice(candlesDataSource.length - count) }
+            return {timeframe: getTimeframeMappings()[timeframe], candles: candlesDataSource}
         }
     )
 
@@ -47,10 +50,17 @@ async function generateCSV() {
 
     const headers = [
         'Time Frame'
-    ].concat(Array.from({length: count}, (x, i) => i==0? "Ahora":""));
+    ].concat(Array.from({length: Number(count)}, (x, i) => i==0? "Ahora":""));
+
+    const maxTimeframeMinutes = data[0]?.timeframe?.minutes
+
+    const lastBigCandleDatetime =  data[0]?.candles[count - 1].open_time
 
     const rows = data.map(({timeframe, candles}, i) => {
-        candles.reverse()
+        const lastIndex = candles.findIndex((c) => c.open_time < lastBigCandleDatetime)
+
+        candles = candles.slice(0, i == 0? Number(count): lastIndex != -1? lastIndex: undefined)
+
         const max = Math.max(...candles.map(c => (c.bbt20 - c.bbb20) * 0.3333));
 
         const min = Math.min(...candles.map(c => (c.bbt20 - c.bbb20) * 0.3333));
@@ -63,36 +73,62 @@ async function generateCSV() {
             return valueWithinRange / range
         }
 
-        const cells = candles.map((candle) => ({
+        const fisrtColspan = data[data.length - 1]?.candles?.filter((c) => c.open_time >= candles[0]?.open_time)?.length * data[data.length - 1]?.timeframe?.minutes
+        
+        const cells = candles.map((candle, i) => {
+            return ({
             value: castDecimal((candle.bbt20 - candle.bbb20) * 0.3333),
-            background: colorGradient(getPercentage((candle.bbt20 - candle.bbb20) * 0.3333))
-        }))
+            background: colorGradient(getPercentage((candle.bbt20 - candle.bbb20) * 0.3333)),
+            colspan: i == 0? fisrtColspan: timeframe.minutes,
+            openTime: candle.open_time
+        })})
 
         return [
-            getTimeframeMappings()[timeframe]
+            timeframe.label
         ].concat(cells)
     })
 
 
     tableHeader.innerHTML = `
         <tr>
-            <th scope="col" colspan="${headers.length}">GAP 33%</th>
+            <th scope="col" colspan="${((headers.length - 1) * maxTimeframeMinutes) + 1}">GAP 33%</th>
         </tr>
         <tr>
-            ${headers.map(header => `<th scope="col">${header}</th>`).join('')}
+            ${headers.map((header, i) => `
+                <th 
+                    scope="col" 
+                    colspan="${rows[0][i].colspan}
+                ">
+                    <div style="position: relative; ${i > 0? "font-size: 13px; font-weight: 300;": ""}">
+                        <div class="${i == 1 ? "timetag": ""}" style="right: calc(100% - 50px)"> 
+                            ${i == 0? header: i == 1? maxTimeframeMinutes <= 60? new Date().toTimeString().slice(0, 5): new Date().toLocalString(): ""}
+                        </div>
+                        <div class="${i == 0 || i == headers.length - 1? "": "timetag"}"> 
+                            ${i == 0 || i == headers.length - 1? "": maxTimeframeMinutes <= 60? rows[0][i].openTime.toTimeString().slice(0, 5): rows[0][i].openTime.toLocalString()}
+                        </div>
+                    </div>
+                </th>`)
+            .join('')}
         </tr>`
+    
 
-    const body = rows.map(row => `<tr>
-            ${row.map(cell => `<td ${cell.background? `style="background-color: ${cell.background}"`: ''}>${cell.value? cell.value: cell}</td>`).join('')}
+    const body = rows.map((row, i) => `<tr>
+            ${row.map(cell => 
+                `<td 
+                    ${cell.background? `style="background-color: ${cell.background}"`: ''} 
+                    ${cell.colspan? `colspan="${cell.colspan}"`: ''}
+                >
+                    ${!cell.colspan || i < rows.length - 2 || i < 1 ? (cell.value? cell.value: cell) : ''}
+                </td>`
+                ).join('')}
         </tr>`).join('')
 
     tableBody.innerHTML = body
     document.getElementById('copyTable').hidden = false
     setLoaderVisibility(false)
 
-    timeout = !datetimeValue? setTimeout(generateCSV, 10000): 0
+    timeout = setTimeout(generateCSV, 5000)
 }
-
 
 function getEmasToGenerate() {
     return [ 
@@ -163,22 +199,46 @@ function colorGradient(percentage) {
 
 function getTimeframeMappings() {
     return {
-        "1m": "1 min",
-        "3m": "3 min",
-        "4m": "4 min",
-        "5m": "5 min",
-        "6m": "6 min",
-        "7m": "7 min",
-        "8m": "8 min",
-        "9m": "9 min",
-        "10m": "10 min",
-        "15m": "15 min",
-        "30m": "30 min",
-        "1h": "1 hora",
-        "2h": "2 horas",
-        "12h": "12 horas",
-        "1d": "1 día",
-        "1w": "1 semana",
+        "1m": {
+            label: "1 min",
+            minutes: 1
+        },
+        "3m": {
+            label: "3 min",
+            minutes: 3
+        },
+        "5m": {
+            label: "5 min",
+            minutes: 5
+        },
+        "15m": {
+            label: "15 min",
+            minutes: 15
+        },
+        "30m": {
+            label: "30 min",
+            minutes: 30
+        },
+        "1h": {
+            label: "1 hora",
+            minutes: 60
+        },
+        "2h": {
+            label: "2 horas",
+            minutes: 120
+        },
+        "12h": {
+            label: "12 horas",
+            minutes: 720
+        },
+        "1d": {
+            label: "1 día",
+            minutes: 1440
+        },
+        "1w": {
+            label: "1 semana",
+            minutes: 10080
+        },
     }
 }
 
