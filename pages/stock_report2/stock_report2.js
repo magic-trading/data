@@ -101,10 +101,10 @@ async function generateCSV() {
                 ">
                     <div style="position: relative; ${i > 0? "font-size: 13px; font-weight: 300;": ""}">
                         <div class="${i == 1 ? "timetag": ""}" style="right: calc(100% - 50px)"> 
-                            ${i == 0? header: i == 1? maxTimeframeMinutes <= 60? new Date().toTimeString().slice(0, 5): new Date().toLocalString(): ""}
+                            ${i == 0? header: i == 1? maxTimeframeMinutes <= 60? datetime.toTimeString().slice(0, 5): datetime.toLocaleString(): ""}
                         </div>
                         <div class="${i == 0 || i == headers.length - 1? "": "timetag"}"> 
-                            ${i == 0 || i == headers.length - 1? "": maxTimeframeMinutes <= 60? rows[0][i].openTime.toTimeString().slice(0, 5): rows[0][i].openTime.toLocalString()}
+                            ${i == 0 || i == headers.length - 1? "": maxTimeframeMinutes <= 60? rows[0][i].openTime.toTimeString().slice(0, 5): rows[0][i].openTime.toLocaleString()}
                         </div>
                     </div>
                 </th>`)
