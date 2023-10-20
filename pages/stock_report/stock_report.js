@@ -90,7 +90,7 @@ async function generateCSV() {
     document.getElementById('copyTable').hidden = false
     setLoaderVisibility(false)
 
-    timeout = !datetimeValue? setTimeout(generateCSV, 3000): 0
+    timeout = !datetimeValue? setTimeout(generateCSV, 10000): 0
 }
 
 
