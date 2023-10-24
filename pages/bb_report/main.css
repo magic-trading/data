@@ -1,4 +1,13 @@
 
+.primary-color {
+  color: #3a469d;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+
 .card {
     padding: 10px; 
     margin: 10px; 
@@ -42,7 +51,7 @@ table tr:last-child td:last-child {
 }
 
 td, th {
-    border: 1px solid #ddd;
+    border: 0.5px solid #ddd;
     padding: 8px;
 }
 
@@ -54,8 +63,8 @@ th {
     padding-top: 12px;
     padding-bottom: 12px;
     text-align: left;
-    background-color: #3a469d;
-    color: white;
+    background-color: white;
+    color: #3a469d;
 }
 
 button {
@@ -94,12 +103,24 @@ input {
     box-sizing: border-box;
 }
 
-.loader.hidden {
-    display: none;
+.timetag {
+  position: absolute;
+  right: -37.5px;
+  width: 45px;
+  background-color: #949494;
+  padding: 5px;
+  text-align: center;
+  border-radius: 5px;
+  top: 50%;
+  color: white;
+}
+
+.loader.hidden, .loader.hidden:before, .loader.hidden:after {
+    animation-play-state: paused;
 }
 
 .loader {
-    animation: rotate 1.3s infinite;
+    animation: rotate 0.7s infinite;
     height: 50px;
     width: 50px;
     display: block;
@@ -114,13 +135,13 @@ input {
     width: 20px;
   }
   .loader:before {
-    animation: ball1 1.3s infinite;
+    animation: ball1 0.7s infinite;
     background-color: #cacaca;
     box-shadow: 30px 0 0 #3a469d;
     margin-bottom: 10px;
   }
   .loader:after {
-    animation: ball2 1.3s infinite;
+    animation: ball2 0.7s infinite;
     background-color: #3a469d;
     box-shadow: 30px 0 0 #cacaca;
   }

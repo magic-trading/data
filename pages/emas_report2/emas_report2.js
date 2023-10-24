@@ -1,15 +1,17 @@
 import api from "../../helpers/api.js"
 import Bollinger from "../../helpers/bollinger.js"
+import crosses from "../../helpers/crosses.js"
 import emaHelper from "../../helpers/ema.js"
+import Router from "../../routes/router.js"
+
+Router.renderNavbar()
 
 let timeout = 0
 
 // document.getElementById('datetime').value = now.toISOString().substring(0, 16)
 document.getElementById('button').addEventListener('click', generateCSV)
-document.getElementById('copyTable').hidden = true
-document.getElementById('copyTable').addEventListener('click', ()=> copytable('tableBody'))
 
-const defaultTimeframes = ['1m', '3m', '5m', '15m', "30m"];
+const defaultTimeframes = ['1m', '3m', '5m', '15m', "30m", "1h"];
 
 $(document).ready(function() {
     $('#timeframes').select2();
@@ -48,6 +50,8 @@ async function generateCSV() {
 
     let data = (await Promise.all(dataPromises))
 
+    console.log(data)
+
     const headers = [
         'Time Frame'
     ].concat(Array.from({length: Number(count)}, (x, i) => i==0? "Ahora":""));
@@ -61,24 +65,51 @@ async function generateCSV() {
 
         candles = candles.slice(0, i == 0? Number(count): lastIndex != -1? lastIndex: undefined)
 
-        const max = Math.max(...candles.map(c => (c.bbt20 - c.bbb20) * 0.3333));
+        const expansionOrder = [...getEmasToGenerate()]
 
-        const min = Math.min(...candles.map(c => (c.bbt20 - c.bbb20) * 0.3333));
+        const getPercentage = (candle) => {
+            const diffPercents = [];
 
-        const getPercentage = (value) => {
-            const range = max - min;
+            const expansionOrderAux = [...expansionOrder].reverse()
 
-            const valueWithinRange = value - min
+            let keepChecking = true
+            
+            while (keepChecking && expansionOrderAux.length > 1) {
+                const emaValuesOrdered = [...expansionOrderAux].sort((emaA, emaB) =>  Number(candle[`ema${emaB}`] - Number(candle[`ema${emaA}`])))
 
-            return valueWithinRange / range
+                if(JSON.stringify(expansionOrderAux) == JSON.stringify(emaValuesOrdered)) {
+                    keepChecking = false
+                    diffPercents.push(...Array.from({ length: expansionOrderAux.length - 1}, () => 0))
+                    break;
+                }
+                for (let i = 0; i < expansionOrderAux.length; i++) {
+                    if(expansionOrderAux[i] != emaValuesOrdered[i]) {
+                        expansionOrderAux.splice(i, 1)
+                        diffPercents.push(1)
+                        break;
+                    }
+                }
+            }
+
+            return diffPercents.reduce((a, b) => a + b, 0) / diffPercents.length;
         }
+
+        getEmasToGenerate().forEach(emaA => getEmasToGenerate().forEach(emaB => emaA < emaB? crosses.includeEmaCrosses(candles, emaA, emaB): null))
+
+        const crossesList = getEmasToGenerate().map(emaA => getEmasToGenerate().map(emaB => emaA < emaB? crosses.getCrosses(candles, emaA, emaB): []).flat()).flat() 
 
         const fisrtColspan = data[data.length - 1]?.candles?.filter((c) => c.open_time >= candles[0]?.open_time)?.length * data[data.length - 1]?.timeframe?.minutes
         
         const cells = candles.map((candle, i) => {
+            const percentage = getPercentage(candle)
+
+            const background = colorGradient(percentage)
+
+            const crossesCandle = crossesList.filter(cross => cross.candleBefore == candle)
+
             return ({
-            value: castDecimal((candle.bbt20 - candle.bbb20) * 0.3333),
-            background: colorGradient(getPercentage((candle.bbt20 - candle.bbb20) * 0.3333)),
+            value: crossesCandle.length > 0? crossesCandle.map(crossCandle => `<span class="cross-${crossCandle.swingType}">${crossCandle.emaA} | ${crossCandle.emaB}</span>`).join('<br>'): ' ',
+            background,
             colspan: i == 0? fisrtColspan: timeframe.minutes,
             openTime: candle.open_time
         })})
@@ -90,9 +121,6 @@ async function generateCSV() {
 
 
     tableHeader.innerHTML = `
-        <tr>
-            <th scope="col" colspan="${((headers.length - 1) * maxTimeframeMinutes) + 1}">GAP 33%</th>
-        </tr>
         <tr>
             ${headers.map((header, i) => `
                 <th 
@@ -118,42 +146,30 @@ async function generateCSV() {
                     ${cell.background? `style="background-color: ${cell.background}"`: ''} 
                     ${cell.colspan? `colspan="${cell.colspan}"`: ''}
                 >
-                    ${!cell.colspan || i < rows.length - 2 || i < 1 ? (cell.value? cell.value: cell) : ''}
+                    ${!cell.colspan || i < rows.length - 2 || i < 2 ? (cell.value? cell.value: cell) : ''}
                 </td>`
                 ).join('')}
         </tr>`).join('')
 
     tableBody.innerHTML = body
-    document.getElementById('copyTable').hidden = false
     setLoaderVisibility(false)
 
     timeout = setTimeout(generateCSV, 5000)
 }
 
 function getEmasToGenerate() {
-    return [ 
-        20
+    return [
+        3,
+        9,
+        20,
+        50,
+        200,
     ]
 }
 
 function getTimeframesToGenerate() {
     return $('#timeframes').val()
 }
-
-function copytable(el) {
-    var urlField = document.getElementById(el)   
-    var range = document.createRange()
-    window.getSelection().removeAllRanges()
-    range.selectNode(urlField)
-    window.getSelection().addRange(range) 
-    document.execCommand('copy')
-}
-
-function castDecimal(value, decimals) {
-    decimals = decimals !== undefined? decimals: value > 10? 2: 4
-    return `${value.toFixed(decimals)}`.replace('.', ',')
-}
-
 
 function setLoaderVisibility(visible) {
     visible? document.getElementById('loader').classList.remove("hidden"): document.getElementById('loader').classList.add("hidden")

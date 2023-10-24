@@ -1,0 +1,45 @@
+
+body {
+    padding: 0;
+    margin: 0;
+}
+
+.navbar {
+  width: 100%;
+  height: 50px;
+  border-bottom: 1px #3a469d solid;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.navbar .link {
+  display: flex;
+  color: #3a469d;
+  text-decoration: none;
+  width: 100%;
+  height: 100%;
+  border-left: 1px #3a469d solid;
+  justify-content: center;
+  align-items: center;
+  transition: 0.5s;
+}
+
+.navbar .link:first-child {
+  border-left: none;
+}
+
+
+.navbar .link:hover {
+  background-color: #3a469d;
+  color: white;
+}
+
+.navbar .link.active::before {
+  content: '';
+  width: 15px;
+  height: 15px;
+  background-color: #3a469d;
+  border-radius: 50%;
+  margin-right: 10px;
+}

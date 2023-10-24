@@ -7,24 +7,20 @@
   font-weight: bold;
 }
 
-
-.card {
-    padding: 10px; 
-    margin: 10px; 
-    border: solid 1px rgb(165, 165, 165); 
-    border-radius: 10px; 
-    width: 300px
+.cross-up, .cross-down {
+  font-size: 12px;
+  font-weight: 600;
+  width: 100px;
+  display: block;
 }
 
-.card-green {
-    border-color: rgb(0, 255, 0);
-    background-color: rgb(200, 255, 200);
+.cross-up {
+  color: rgb(184, 0, 0);
 }
 
-.card-red {
-    border-color: red;
-    background-color: rgb(255, 200, 200);
-} 
+.cross-down {
+  color: green;
+}
 
 table {
     font-family: Arial, Helvetica, sans-serif;
@@ -63,8 +59,8 @@ th {
     padding-top: 12px;
     padding-bottom: 12px;
     text-align: left;
-    background-color: #3a469d;
-    color: white;
+    background-color: white;
+    color: #3a469d;
 }
 
 button {
@@ -107,7 +103,8 @@ input {
   position: absolute;
   right: -37.5px;
   width: 45px;
-  background-color: #6f77af;
+  background-color: #949494;
+  color: #ffffff;
   padding: 5px;
   text-align: center;
   border-radius: 5px;
