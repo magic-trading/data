@@ -76,15 +76,15 @@ async function generateData() {
         const fisrtColspan = data[data.length - 1]?.candles?.filter((c) => c.open_time >= candles[0]?.open_time)?.length * data[data.length - 1]?.timeframe?.minutes
 
         const colors = {
-            green: { red: 255, green: 105, blue: 105 },
-            red: { red: 99, green: 190, blue: 12 },
+            green: { red: 99, green: 190, blue: 123 },
+            red: { red: 255, green: 105, blue: 105 },
             white: { red: 255, green: 255, blue: 255 }
         }
         
         const cells = candles.map((candle, i) => {
             return ({
             value: castDecimal(candle.bbt20 - candle.bbb20),
-            background: colorGradient(getPercentage(candle.bbt20 - candle.bbb20), colors.white, (candle.close < candle.ema20) ? colors.green: colors.red),
+            background: colorGradient(getPercentage(candle.bbt20 - candle.bbb20), colors.white, (candle.close > candle.ema20) ? colors.green: colors.red),
             colspan: i == 0? fisrtColspan: timeframe.minutes,
             openTime: candle.open_time
         })})

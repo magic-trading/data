@@ -70,7 +70,7 @@ async function generateCSV() {
         const getPercentage = (candle) => {
             const diffPercents = [];
 
-            const expansionOrderAux = [...expansionOrder].reverse()
+            const expansionOrderAux = [...expansionOrder]
 
             let keepChecking = true
             
@@ -79,13 +79,20 @@ async function generateCSV() {
 
                 if(JSON.stringify(expansionOrderAux) == JSON.stringify(emaValuesOrdered)) {
                     keepChecking = false
+                    diffPercents.push(...Array.from({ length: expansionOrderAux.length - 1}, () => 1))
+                    break;
+                }
+
+                if(JSON.stringify([...expansionOrderAux].reverse()) == JSON.stringify(emaValuesOrdered)) {
+                    keepChecking = false
                     diffPercents.push(...Array.from({ length: expansionOrderAux.length - 1}, () => 0))
                     break;
                 }
+
                 for (let i = 0; i < expansionOrderAux.length; i++) {
                     if(expansionOrderAux[i] != emaValuesOrdered[i]) {
                         expansionOrderAux.splice(i, 1)
-                        diffPercents.push(1)
+                        diffPercents.push(0.5)
                         break;
                     }
                 }
@@ -146,7 +153,7 @@ async function generateCSV() {
                     ${cell.background? `style="background-color: ${cell.background}"`: ''} 
                     ${cell.colspan? `colspan="${cell.colspan}"`: ''}
                 >
-                    ${!cell.colspan || i < rows.length - 2 || i < 2 ? (cell.value? cell.value: cell) : ''}
+                    ${!cell.colspan || i < rows.length - 2 || i < 3 ? (cell.value? cell.value: cell) : ''}
                 </td>`
                 ).join('')}
         </tr>`).join('')
