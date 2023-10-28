@@ -2,6 +2,7 @@ import api from "../../helpers/api.js"
 import Bollinger from "../../helpers/bollinger.js"
 import crosses from "../../helpers/crosses.js"
 import emaHelper from "../../helpers/ema.js"
+import sortMovements from "../../helpers/sortMovements.js"
 import Router from "../../routes/router.js"
 
 Router.renderNavbar()
@@ -29,11 +30,7 @@ async function generateCSV() {
     const symbol = document.getElementById('symbol').value
     const count = document.getElementById('count').value
 
-    console.log(datetimeValue)
-
     const datetime =  datetimeValue? new Date(datetimeValue): new Date()
-
-    console.log(datetime)
 
     const dataPromises = getTimeframesToGenerate().map(
         async timeframe => {
@@ -49,8 +46,6 @@ async function generateCSV() {
     )
 
     let data = (await Promise.all(dataPromises))
-
-    console.log(data)
 
     const headers = [
         'Time Frame'
@@ -68,6 +63,7 @@ async function generateCSV() {
         const expansionOrder = [...getEmasToGenerate()]
 
         const getPercentage = (candle) => {
+            console.log("getPercentage")
             const diffPercents = [];
 
             const expansionOrderAux = [...expansionOrder]
@@ -88,15 +84,32 @@ async function generateCSV() {
                     diffPercents.push(...Array.from({ length: expansionOrderAux.length - 1}, () => 0))
                     break;
                 }
+                // which emas can be removed to make the array ordered in up or down
+                const emasToRemove = expansionOrderAux.filter(e => {
+                    const expansionOrderAux2 = [...expansionOrderAux]
+                    expansionOrderAux2.splice(expansionOrderAux2.indexOf(e), 1)
 
-                for (let i = 0; i < expansionOrderAux.length; i++) {
-                    if(expansionOrderAux[i] != emaValuesOrdered[i]) {
-                        expansionOrderAux.splice(i, 1)
-                        diffPercents.push(0.5)
-                        break;
-                    }
+                    const expansionOrderAux2R = [...expansionOrderAux].reverse()
+                    expansionOrderAux2R.splice(expansionOrderAux2R.indexOf(e), 1)
+
+                    const emaValuesOrderedAux = [...emaValuesOrdered]
+                    emaValuesOrderedAux.splice(emaValuesOrderedAux.indexOf(e), 1)
+
+                    return JSON.stringify(expansionOrderAux2) == JSON.stringify(emaValuesOrderedAux)
+                    || JSON.stringify(expansionOrderAux2R) == JSON.stringify(emaValuesOrderedAux)
+                })
+
+                if(emasToRemove.length > 0) {
+                    expansionOrderAux.splice(expansionOrderAux.indexOf(emasToRemove.at(-1)), 1)
                 }
+                else {
+                    const notOrderedValues = expansionOrderAux.filter((e, i) => e != emaValuesOrdered[i] && e != emaValuesOrdered.at(-1 - i))
+                    expansionOrderAux.splice(expansionOrderAux.indexOf(notOrderedValues.at(-1)), 1)
+                }
+                diffPercents.push(0.5)
             }
+
+            console.log(diffPercents)
 
             return diffPercents.reduce((a, b) => a + b, 0) / diffPercents.length;
         }
@@ -114,12 +127,30 @@ async function generateCSV() {
 
             const crossesCandle = crossesList.filter(cross => cross.candleBefore == candle)
 
+            const tooltip = `
+                <div style="text-align: center">${candle.open_time.toTimeString().slice(0, 5)}</div>
+                <br>
+                Close: ${candle.close}
+                <br><br>
+                EMAs:
+                <ul>
+                    ${getEmasToGenerate().map(ema => `<li>${ema} → ${castDecimal(candle[`ema${ema}`])}</li>`).join('')}
+                </ul>
+                Crosses:
+                <ul>
+                    ${crossesCandle.map(cross => `<li class="cross-${cross.swingType}">${cross.emaA} ${cross.swingType == 'up'? '↑': '↓'} ${cross.emaB} <span style="color: white">→ ${castDecimal(cross.crossPrice)}</span></li>`).join('')}
+                </ul>
+            `
+
             return ({
-            value: crossesCandle.length > 0? crossesCandle.map(crossCandle => `<span class="cross-${crossCandle.swingType}">${crossCandle.emaA} | ${crossCandle.emaB}</span>`).join('<br>'): ' ',
-            background,
-            colspan: i == 0? fisrtColspan: timeframe.minutes,
-            openTime: candle.open_time
-        })})
+                value: crossesCandle.length > 0? crossesCandle.map(crossCandle => `<span class="cross-${crossCandle.swingType}">${crossCandle.emaA} ${crossCandle.swingType == 'up'? '↑': '↓'} ${crossCandle.emaB}</span>`).join('<br>'): ' ',
+                valueSmall: crossesCandle.length > 0? crossesCandle.map(crossCandle => `<span class="cross-${crossCandle.swingType} small">${crossCandle.swingType == 'up'? '↑': '↓'}</span>`).join(''): ' ',
+                background,
+                colspan: i == 0? fisrtColspan: timeframe.minutes,
+                openTime: candle.open_time,
+                tooltip, 
+            })
+        })
 
         return [
             timeframe.label
@@ -150,10 +181,12 @@ async function generateCSV() {
     const body = rows.map((row, i) => `<tr>
             ${row.map(cell => 
                 `<td 
-                    ${cell.background? `style="background-color: ${cell.background}"`: ''} 
+                    style="text-align: center; ${cell.background? `background-color: ${cell.background}`: ''}"
                     ${cell.colspan? `colspan="${cell.colspan}"`: ''}
+                    ${cell.tooltip? 'class="tooltip"': ''}
                 >
-                    ${!cell.colspan || i < rows.length - 2 || i < 3 ? (cell.value? cell.value: cell) : ''}
+                    ${!cell.colspan || i < rows.length - 2 || i < 3 ? (cell.value? cell.value: cell) : (cell.valueSmall? cell.valueSmall: cell)}
+                    ${cell.tooltip? `<div class='tooltiptext'>${cell.tooltip}</div>`: ''}
                 </td>`
                 ).join('')}
         </tr>`).join('')
@@ -161,7 +194,7 @@ async function generateCSV() {
     tableBody.innerHTML = body
     setLoaderVisibility(false)
 
-    timeout = setTimeout(generateCSV, 5000)
+    // timeout = setTimeout(generateCSV, 5000)
 }
 
 function getEmasToGenerate() {
@@ -263,6 +296,11 @@ function getTimeframeMappings() {
             minutes: 10080
         },
     }
+}
+
+function castDecimal(value, decimals) {
+    decimals = decimals !== undefined? decimals: value > 10? 2: 4
+    return `${value.toFixed(decimals)}`.replace('.', ',')
 }
 
 
