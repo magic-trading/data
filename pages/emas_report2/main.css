@@ -20,7 +20,6 @@ span.cross-down.small {
 
 .cross-up {
   color: green;
-  
 }
 
 .cross-down {
@@ -128,10 +127,11 @@ input {
 .tooltip .tooltiptext {
   visibility: hidden;
   width: 140px;
-  background-color: black;
-  color: #fff;
+  background-color: white;
+  color: black;
   padding: 10px;
   border-radius: 6px;
+  border: gray 1px solid;
  
   /* Position the tooltip text - see examples below! */
   position: absolute;
@@ -154,7 +154,7 @@ input {
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: transparent transparent black transparent;
+  border-color: transparent transparent white transparent;
 }
 
 .tooltip:hover .tooltiptext {

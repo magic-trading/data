@@ -2,6 +2,7 @@ import api from "../../helpers/api.js"
 import Bollinger from "../../helpers/bollinger.js"
 import crosses from "../../helpers/crosses.js"
 import emaHelper from "../../helpers/ema.js"
+import helpers from "../../helpers/helpers.js"
 import Router from "../../routes/router.js"
 
 Router.renderNavbar()
@@ -10,6 +11,7 @@ let timeout = 0
 
 // document.getElementById('datetime').value = now.toISOString().substring(0, 16)
 document.getElementById('button').addEventListener('click', generateCSV)
+document.getElementById('openWindow').addEventListener('click', helpers.openWindow)
 
 const defaultTimeframes = ['1m', '3m', '5m', '15m', "30m", "1h"];
 
@@ -126,6 +128,8 @@ async function generateCSV() {
 
             const crossesCandle = crossesList.filter(cross => cross.candleBefore == candle)
 
+            const emaValuesOrdered = [...expansionOrder].sort((emaA, emaB) =>  Number(candle[`ema${emaB}`] - Number(candle[`ema${emaA}`])))
+
             const tooltip = `
                 <div style="text-align: center">${candle.open_time.toTimeString().slice(0, 5)}</div>
                 <br>
@@ -133,12 +137,14 @@ async function generateCSV() {
                 <br><br>
                 EMAs:
                 <ul>
-                    ${getEmasToGenerate().map(ema => `<li>${ema} → ${castDecimal(candle[`ema${ema}`])}</li>`).join('')}
+                    ${emaValuesOrdered.map(ema => `<li>${ema} → ${castDecimal(candle[`ema${ema}`])}</li>`).join('')}
                 </ul>
-                Crosses:
-                <ul>
-                    ${crossesCandle.map(cross => `<li class="cross-${cross.swingType}">${cross.emaA} ${cross.swingType == 'up'? '↑': '↓'} ${cross.emaB} <span style="color: white">→ ${castDecimal(cross.crossPrice)}</span></li>`).join('')}
-                </ul>
+                ${crossesCandle.length > 0? `
+                    Crosses:
+                    <ul>
+                    ${crossesCandle.map(cross => `<li class="cross-${cross.swingType}">${cross.emaA} ${cross.swingType == 'up'? '↑': '↓'} ${cross.emaB} <span style="color: black">→ ${castDecimal(cross.crossPrice)}</span></li>`).join('')}
+                    </ul>
+                `: ''}
             `
 
             return ({

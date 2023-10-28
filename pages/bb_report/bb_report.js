@@ -1,6 +1,7 @@
 import api from "../../helpers/api.js"
 import Bollinger from "../../helpers/bollinger.js"
 import emaHelper from "../../helpers/ema.js"
+import helpers from "../../helpers/helpers.js";
 import Router from "../../routes/router.js"
 
 Router.renderNavbar();
@@ -8,6 +9,7 @@ Router.renderNavbar();
 let timeout = 0
 
 document.getElementById('button').addEventListener('click', generateData)
+document.getElementById('openWindow').addEventListener('click', helpers.openWindow)
 
 const defaultTimeframes = ['1m', '3m', '5m', '15m', "30m", "1h"];
 
