@@ -59,7 +59,7 @@ export default class Cross {
     }
 
     calculateSwingType() {
-        this.swingType = this.candleBefore[this.emaAKey] > this.candleBefore[this.emaBKey]? "down": "up"
+        this.swingType = this.candleBefore[this.emaAKey] > this.candleBefore[this.emaBKey]? "up": "down"
     }
 
     calculateCrossPoint() {
