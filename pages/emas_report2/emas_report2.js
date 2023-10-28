@@ -2,7 +2,6 @@ import api from "../../helpers/api.js"
 import Bollinger from "../../helpers/bollinger.js"
 import crosses from "../../helpers/crosses.js"
 import emaHelper from "../../helpers/ema.js"
-import sortMovements from "../../helpers/sortMovements.js"
 import Router from "../../routes/router.js"
 
 Router.renderNavbar()
@@ -194,7 +193,7 @@ async function generateCSV() {
     tableBody.innerHTML = body
     setLoaderVisibility(false)
 
-    // timeout = setTimeout(generateCSV, 5000)
+    timeout = setTimeout(generateCSV, 5000)
 }
 
 function getEmasToGenerate() {
