@@ -29,6 +29,8 @@ async function generateData() {
     const symbol = document.getElementById('symbol').value
     const count = document.getElementById('count').value
 
+    const v2Color = document.getElementById('colorsV2').checked
+
     console.log(datetimeValue)
 
     const datetime =  datetimeValue? new Date(datetimeValue): new Date()
@@ -80,13 +82,18 @@ async function generateData() {
         const colors = {
             green: { red: 99, green: 190, blue: 123 },
             red: { red: 255, green: 105, blue: 105 },
-            white: { red: 255, green: 255, blue: 255 }
+            white: { red: 255, green: 255, blue: 255 },
+            yelow: { red: 245, green: 233, blue: 130 }
         }
         
         const cells = candles.map((candle, i) => {
+            const color = v2Color ? 
+                colorGradient(getPercentage(candle.bbt20 - candle.bbb20), colors.white, candle.close > candle.ema20? colors.green : colors.red) :
+                colorGradient(getPercentage(candle.bbt20 - candle.bbb20), colors.red, colors.yelow, colors.green) 
+
             return ({
             value: castDecimal(candle.bbt20 - candle.bbb20),
-            background: colorGradient(getPercentage(candle.bbt20 - candle.bbb20), colors.white, (candle.close > candle.ema20) ? colors.green: colors.red),
+            background: color,
             colspan: i == 0? fisrtColspan: timeframe.minutes,
             openTime: candle.open_time
         })})
@@ -164,8 +171,21 @@ function setLoaderVisibility(visible) {
 }
 
 // Gradient Function
-function colorGradient(percentage, color1, color2) {
+function colorGradient(percentage, color1, color2, color3) {
+
     var fade = percentage;
+
+    // Do we have 3 colors for the gradient? Need to adjust the params.
+    if (color3) {
+      fade = fade * 2;
+
+      // Find which interval to use and adjust the fade percentage
+      if (fade >= 1) {
+        fade -= 1;
+        color1 = color2;
+        color2 = color3;
+      }
+    }
 
     var diffRed = color2.red - color1.red;
     var diffGreen = color2.green - color1.green;

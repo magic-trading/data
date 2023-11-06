@@ -64,7 +64,6 @@ async function generateCSV() {
         const expansionOrder = [...getEmasToGenerate()]
 
         const getPercentage = (candle) => {
-            console.log("getPercentage")
             const diffPercents = [];
 
             const expansionOrderAux = [...expansionOrder]
@@ -109,8 +108,6 @@ async function generateCSV() {
                 }
                 diffPercents.push(0.5)
             }
-
-            console.log(diffPercents)
 
             return diffPercents.reduce((a, b) => a + b, 0) / diffPercents.length;
         }
