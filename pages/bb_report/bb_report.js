@@ -133,7 +133,7 @@ async function generateData() {
     tableBody.innerHTML = body
     
     setLoaderVisibility(false)
-    // timeout = setTimeout(generateData, 5000)
+    timeout = setTimeout(generateData, 5000)
 }
 
 function getEmasToGenerate() {
