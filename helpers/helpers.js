@@ -37,7 +37,6 @@ class Helpers {
 
     openWindow() {
         open(window.location.href, "_blank", "popup=1")
-        window.close()
     }
 }
 

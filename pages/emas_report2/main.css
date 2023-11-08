@@ -8,22 +8,49 @@
 
 span.cross-up,
 span.cross-down {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   width: 100px;
 }
 
 span.cross-up.small,
 span.cross-down.small {
+  font-weight: 400;
   width: min-content;
 }
 
 .cross-up {
   color: green;
+  font-family: math, monospace;
 }
 
 .cross-down {
   color: rgb(184, 0, 0);
+  font-family: math, monospace;
+}
+
+.swing-up:after,.swing-down:after {
+  border-radius: 50%;
+  content: "";
+  display: block;
+  height: calc(100% - 8px);
+  width: calc(100% - 8px);
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  border-radius: 0px;
+  border-width: 0px;
+  border-style: solid;
+}
+
+.swing-up::after {
+  border-bottom-width: 2px;
+  border-color: rgb(31, 150, 31, 0.7);
+}
+
+.swing-down::after {
+  border-top-width: 2px;
+  border-color: rgb(184, 0, 0, 0.4);
 }
 
 table {
@@ -131,12 +158,13 @@ input {
   color: black;
   padding: 10px;
   border-radius: 6px;
-  border: gray 1px solid;
+  border: 2px solid;
  
   /* Position the tooltip text - see examples below! */
   position: absolute;
   z-index: 1;
   font-size: 14px;
+  font-family: math, monospace;
 }
 
 .tooltip .tooltiptext {
@@ -147,14 +175,20 @@ input {
 }
 
 .tooltip .tooltiptext::after {
-  content: " ";
+  content: "";
   position: absolute;
-  bottom: 100%;  /* At the top of the tooltip */
+  bottom: calc(100% - 7.5px);  /* At the top of the tooltip */
   left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
+  margin-left: -7.5px;
+  border-width: 0px;
+  background-color: white;
+  width: 15px;
+  height: 15px;
+  transform: rotate(45deg);
   border-style: solid;
-  border-color: transparent transparent white transparent;
+  border-color: inherit;
+  border-top-width: 2px;
+  border-left-width: 2px;
 }
 
 .tooltip:hover .tooltiptext {

@@ -1,3 +1,4 @@
+import BollingerReport from "../../classes/bollingerReport.js";
 import api from "../../helpers/api.js"
 import Bollinger from "../../helpers/bollinger.js"
 import emaHelper from "../../helpers/ema.js"
@@ -5,6 +6,8 @@ import helpers from "../../helpers/helpers.js";
 import Router from "../../routes/router.js"
 
 Router.renderNavbar();
+
+const bollingerReport = new BollingerReport()
 
 let timeout = 0
 
@@ -29,32 +32,24 @@ async function generateData() {
     const symbol = document.getElementById('symbol').value
     const count = document.getElementById('count').value
 
-    const v2Color = document.getElementById('colorsV2').checked
-
-    console.log(datetimeValue)
-
     const datetime =  datetimeValue? new Date(datetimeValue): new Date()
 
-    console.log(datetime)
+    const v2Color = document.getElementById('colorsV2').checked
 
-    const dataPromises = getTimeframesToGenerate().map(
-        async timeframe => {
-            const candlesDataSource = await api.getCandleData(symbol, timeframe, 1500, undefined, datetime)
+    const reportConfig = {
+        symbol,
+        timeframes: getTimeframesToGenerate(),
+        maxTimeframeCount: count,
+        datetime
+    }
 
-            getEmasToGenerate().forEach(ema => emaHelper.includeEmaValue(candlesDataSource, ema))
-            new Bollinger(candlesDataSource).includeBollingerBands(20)
+    bollingerReport.setConfig(reportConfig)
 
-            candlesDataSource.reverse()
-            
-            return {timeframe: getTimeframeMappings()[timeframe], candles: candlesDataSource}
-        }
-    )
+    await bollingerReport.fetchCandlesData()
 
-    let data = (await Promise.all(dataPromises))
+    const headers = bollingerReport.headers
 
-    const headers = [
-        'Time Frame'
-    ].concat(Array.from({length: Number(count)}, (x, i) => i==0? "Ahora":""));
+    const data = bollingerReport.candlesData
 
     const maxTimeframeMinutes = data[0]?.timeframe?.minutes
 
@@ -138,7 +133,7 @@ async function generateData() {
     tableBody.innerHTML = body
     
     setLoaderVisibility(false)
-    timeout = setTimeout(generateData, 5000)
+    // timeout = setTimeout(generateData, 5000)
 }
 
 function getEmasToGenerate() {

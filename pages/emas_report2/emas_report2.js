@@ -128,20 +128,20 @@ async function generateCSV() {
             const emaValuesOrdered = [...expansionOrder].sort((emaA, emaB) =>  Number(candle[`ema${emaB}`] - Number(candle[`ema${emaA}`])))
 
             const tooltip = `
-                <div style="text-align: center">${candle.open_time.toTimeString().slice(0, 5)}</div>
+                <div style="text-align: center;">${candle.open_time.toTimeString().slice(0, 5)}</div>
                 <br>
-                Close: ${candle.close}
+                Close: <b style="color: ${candle.close > candles.at(i + 1)?.close ? colorGradient(1) : colorGradient(0)}"> ${candle.close}</b>
                 <br><br>
+                ${crossesCandle.length > 0? `
+                    Crosses:
+                    <ul>
+                    ${crossesCandle.map(cross => `<li class="cross-${cross.swingType}"><b>${cross.emaA} ${cross.swingType == 'up'? '↑': '↓'} ${cross.emaB} </b> <span style="color: black">→ ${castDecimal(cross.crossPrice)}</span></li>`).join('')}
+                    </ul>
+                `: ''}
                 EMAs:
                 <ul>
                     ${emaValuesOrdered.map(ema => `<li>${ema} → ${castDecimal(candle[`ema${ema}`])}</li>`).join('')}
                 </ul>
-                ${crossesCandle.length > 0? `
-                    Crosses:
-                    <ul>
-                    ${crossesCandle.map(cross => `<li class="cross-${cross.swingType}">${cross.emaA} ${cross.swingType == 'up'? '↑': '↓'} ${cross.emaB} <span style="color: black">→ ${castDecimal(cross.crossPrice)}</span></li>`).join('')}
-                    </ul>
-                `: ''}
             `
 
             return ({
@@ -150,7 +150,8 @@ async function generateCSV() {
                 background,
                 colspan: i == 0? fisrtColspan: timeframe.minutes,
                 openTime: candle.open_time,
-                tooltip, 
+                tooltip,
+                percentage
             })
         })
 
@@ -169,7 +170,7 @@ async function generateCSV() {
                 ">
                     <div style="position: relative; ${i > 0? "font-size: 13px; font-weight: 300;": ""}">
                         <div class="${i == 1 ? "timetag": ""}" style="right: calc(100% - 50px)"> 
-                            ${i == 0? header: i == 1? maxTimeframeMinutes <= 60? datetime.toTimeString().slice(0, 5): datetime.toLocaleString(): ""}
+                            ${i == 0? header: i == 1? maxTimeframeMinutes <= 120? datetime.toTimeString().slice(0, 5): datetime.toLocaleString(): ""}
                         </div>
                         <div class="${i == 0 || i == headers.length - 1? "": "timetag"}"> 
                             ${i == 0 || i == headers.length - 1? "": maxTimeframeMinutes <= 60? rows[0][i].openTime.toTimeString().slice(0, 5): rows[0][i].openTime.toLocaleString()}
@@ -183,12 +184,12 @@ async function generateCSV() {
     const body = rows.map((row, i) => `<tr>
             ${row.map(cell => 
                 `<td 
-                    style="text-align: center; ${cell.background? `background-color: ${cell.background}`: ''}"
+                    style="text-align: center; ${cell.background? `background-color: ${cell.background}`: ''}" 
+                    class="${cell.percentage == 1? 'swing-up' : cell.percentage == 0? 'swing-down': ''} ${cell.tooltip? 'tooltip': ''}"
                     ${cell.colspan? `colspan="${cell.colspan}"`: ''}
-                    ${cell.tooltip? 'class="tooltip"': ''}
                 >
                     ${!cell.colspan || i < rows.length - 2 || i < 3 ? (cell.value? cell.value: cell) : (cell.valueSmall? cell.valueSmall: cell)}
-                    ${cell.tooltip? `<div class='tooltiptext'>${cell.tooltip}</div>`: ''}
+                    ${cell.tooltip? `<div class='tooltiptext' style="border-color: ${cell.background}">${cell.tooltip}</div>`: ''}
                 </td>`
                 ).join('')}
         </tr>`).join('')
