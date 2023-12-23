@@ -1,5 +1,5 @@
 import Router from "../../routes/router.js"
-import binanceAPI from "../../src/api/binanceAPI.js";
+import binanceAPI from "../../src/api/BinanceAPI.js";
 import timeframes from "../../src/config/timeframes.js";
 import helpers from "../../src/helpers/helpers.js";
 import templateHelper from "../../src/helpers/templateHelper.js";

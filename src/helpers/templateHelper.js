@@ -43,7 +43,6 @@ class TemplateHelper {
             if(!key.includes(' ')) {
                 key = `$.${key}`
             }
-            console.log(key);
             const result = eval(key)
             if(result instanceof Element) {
                 return result.outerHTML;
