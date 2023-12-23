@@ -1,4 +1,4 @@
-import ema from "./ema.js"
+import ema from "./Ema.js"
 
 class Macd {
 
@@ -16,15 +16,15 @@ class Macd {
         if (!this.candlesData) return
 
         if (!this.candlesData.slice(-1)[`ema${ema1}`]) {
-            ema.includeEmaValue(this.candlesData, ema1)
+            ema.includeEma(this.candlesData, ema1)
         }
 
         if (!this.candlesData.slice(-1)[`ema${ema2}`]) {
-            ema.includeEmaValue(this.candlesData, ema2)
+            ema.includeEma(this.candlesData, ema2)
         }
 
         if (!this.candlesData.slice(-1)[`ema${signalEma}`]) {
-            ema.includeEmaValue(this.candlesData, signalEma)
+            ema.includeEma(this.candlesData, signalEma)
         }
 
         this.candlesData.forEach((candle, i) => {

@@ -1,7 +1,6 @@
-import api from "../helpers/api.js";
-import Bollinger from "../helpers/bollinger.js";
-import timeframes from "../helpers/timeframes.js";
-
+import binanceAPI from "../api/binanceAPI.js";
+import timeframes from "../config/timeframes.js";
+import Bollinger from "../indicators/bollinger.js";
 
 class BollingerReport {
 
@@ -51,7 +50,7 @@ class BollingerReport {
         this.isFetching = true;
         const fetchPromises = this.config.timeframes.map(
             async timeframe => {
-                const candlesDataSource = await api.getCandleData(this.config.symbol, timeframe, 1500, undefined, this.config.datetime)
+                const candlesDataSource = await binanceAPI.getCandleData(this.config.symbol, timeframe, 1500, undefined, this.config.datetime)
     
                 new Bollinger(candlesDataSource).includeBollingerBands(20)
     

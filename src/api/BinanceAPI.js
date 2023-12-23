@@ -1,4 +1,29 @@
-class Helpers {
+class BinanceAPI {
+
+    API_URL = "https://fapi.binance.com"
+
+
+    async getCandleData(symbol, interval, limit = null, startTime, endTime) {
+        const endpoint = "fapi/v1/klines"
+
+        const params = new URLSearchParams({
+            symbol: symbol,
+            interval: interval
+        })
+
+        limit ? params.append('limit', limit): limit
+
+        startTime? params.append('startTime', new Date(startTime).getTime() + (new Date().getTimezoneOffset() * 60000)): null
+        endTime? params.append('endTime', new Date(endTime).getTime()): null
+
+        const request = fetch(`${this.API_URL}/${endpoint}?${params.toString()}`)
+
+        const response = await request
+
+        const data = await response.json()
+
+        return this.mapCandleData(data)
+    }
 
     mapCandleData(data) {
         if (!data) return []
@@ -34,12 +59,6 @@ class Helpers {
         //     ]
         // ]
     }
-
-    openWindow() {
-        open(window.location.href, "_blank", "popup=1")
-    }
 }
 
-
-
-export default new Helpers()
+export default new BinanceAPI()

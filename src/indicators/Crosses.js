@@ -1,37 +1,41 @@
-import Cross from "../classes/cross.js"
+import Cross from "./Cross.js"
 
-class Crosses {
+export default class Crosses {
 
-    getLastEmaCross(candleDataArray, period1, period2) {
+    constructor(candlesData) {
+        this.candlesData = candlesData
+    }
+
+    getLastEmaCross(period1, period2) {
         const ema1Key = `ema${period1}`
         const ema2Key = `ema${period2}`
 
-        const lastCandle = candleDataArray[candleDataArray.length - 1]
+        const lastCandle = this.candlesData[this.candlesData.length - 1]
 
         const greatherEma = lastCandle[ema1Key] > lastCandle[ema2Key]? ema1Key: ema2Key
         const smallerEma = greatherEma == ema1Key? ema2Key: ema1Key
 
-        for (let index = candleDataArray.length - 1; index >= 0; index--) {
-            const candleData = candleDataArray[index];
+        for (let index = this.candlesData.length - 1; index >= 0; index--) {
+            const candleData = this.candlesData[index];
             if(candleData[greatherEma] <= candleData[smallerEma]){
-                return this.getCrossByCandle(candleDataArray, candleData, period1, period2)
+                return this.getCrossByCandle(candleData, period1, period2)
             }
         }
 
     }
 
-    includeEmaCrosses(candleDataArray, period1, period2) {
+    includeEmaCrosses(period1, period2) {
         const ema1Key = `ema${period1}`
         const ema2Key = `ema${period2}`
         const newCrossKey = `cross${ema1Key}${ema2Key}`
 
-        const lastCandle = candleDataArray[candleDataArray.length - 1]
+        const lastCandle = this.candlesData[this.candlesData.length - 1]
 
         let greatherEma = lastCandle[ema1Key] > lastCandle[ema2Key]? ema1Key: ema2Key
         let smallerEma = greatherEma == ema1Key? ema2Key: ema1Key
 
-        for (let index = candleDataArray.length - 1; index >= 0; index--) {
-            const candleData = candleDataArray[index];
+        for (let index = this.candlesData.length - 1; index >= 0; index--) {
+            const candleData = this.candlesData[index];
             let isCross = false
 
             if(candleData[greatherEma] == null || candleData[smallerEma] == null) {
@@ -46,12 +50,12 @@ class Crosses {
         }
     }
 
-    getCandlesWithCrosses(candleDataArray, period1, period2) {
+    getCandlesWithCrosses(period1, period2) {
         const ema1Key = `ema${period1}`
         const ema2Key = `ema${period2}`
         const newCrossKey = `cross${ema1Key}${ema2Key}`
 
-        return candleDataArray.filter(candleData => candleData[newCrossKey]).reverse()
+        return this.candlesData.filter(candleData => candleData[newCrossKey]).reverse()
     }
 
     calculateCrossPoint(candle1, candle2, period1, period2) {
@@ -69,20 +73,20 @@ class Crosses {
         return [date, py];
     }
 
-    getCrossByCandle(candleDataArray, candle, period1, period2) {
-        const cross1 = new Cross(candle, candleDataArray, period1, period2)
+    getCrossByCandle(candle, period1, period2) {
+        const cross1 = new Cross(candle, this.candlesData, period1, period2)
 
         // const ema1Key = `ema${period1}`
         // const ema2Key = `ema${period2}`
-        // const cross = this.calculateCrossPoint(candle, candleDataArray[candleDataArray.indexOf(candle) + 1], period1, period2)
+        // const cross = this.calculateCrossPoint(candle, this.candlesData[this.candlesData.indexOf(candle) + 1], period1, period2)
 
         return cross1
     }
 
-    getCrosses(candleDataArray, period1, period2) {
-        const candlesWithCrosses = this.getCandlesWithCrosses(candleDataArray, period1, period2)
+    getCrosses(period1, period2) {
+        const candlesWithCrosses = this.getCandlesWithCrosses(period1, period2)
 
-        return candlesWithCrosses.map(candle => this.getCrossByCandle(candleDataArray, candle, period1, period2))
+        return candlesWithCrosses.map(candle => this.getCrossByCandle(candle, period1, period2))
     }
 
     getCrossReturningAverage(crosses, formatted = false) {
@@ -110,12 +114,9 @@ class Crosses {
         return (days? days + "d ": "") + (hours? hours + "h ": "") + (minutes? minutes + "m ": "") + (seconds? seconds + "s": "");
     }
 
-    getCrossCandleDif(candleDataArray, cross1, cross2) {
+    getCrossCandleDif(cross1, cross2) {
         if (cross1 && cross2)
-            return Math.abs(candleDataArray.indexOf(cross1.candleBefore) - candleDataArray.indexOf(cross2.candleBefore))
+            return Math.abs(this.candlesData.indexOf(cross1.candleBefore) - this.candlesData.indexOf(cross2.candleBefore))
         return 0
     }
-    
 }
-
-export default new Crosses()

@@ -1,7 +1,6 @@
-import ema from "./ema.js"
-import helpers from "./helpers.js"
+import Ema from "./Ema.js"
 
-class Bollinger {
+export default class Bollinger {
 
     constructor(candlesData) {
         this.candlesData = candlesData
@@ -11,7 +10,7 @@ class Bollinger {
         if (!this.candlesData) return
 
         if (!this.candlesData.slice(-1)[`ema${period}`]) {
-            ema.includeEmaValue(this.candlesData, period)
+            new Ema(this.candlesData).includeEma(period)
         }
 
         const keyTop = `bbt${period}`
@@ -45,5 +44,3 @@ class Bollinger {
         return [top, bottom]
     }
 }
-
-export default Bollinger

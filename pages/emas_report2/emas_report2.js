@@ -1,16 +1,20 @@
-import api from "../../helpers/api.js"
-import Bollinger from "../../helpers/bollinger.js"
-import crosses from "../../helpers/crosses.js"
-import emaHelper from "../../helpers/ema.js"
-import helpers from "../../helpers/helpers.js"
 import Router from "../../routes/router.js"
+import binanceAPI from "../../src/api/binanceAPI.js";
+import timeframes from "../../src/config/timeframes.js";
+import helpers from "../../src/helpers/helpers.js";
+import templateHelper from "../../src/helpers/templateHelper.js";
+import Crosses from "../../src/indicators/Crosses.js";
+import Ema from "../../src/indicators/Ema.js";
 
 Router.renderNavbar()
 
 let timeout = 0
 
-// document.getElementById('datetime').value = now.toISOString().substring(0, 16)
-document.getElementById('button').addEventListener('click', generateCSV)
+const AUTO_REFRESH_TIME = 5; // seconds
+const DEFAULT_SYMBOL = 'BTCUSDT'
+
+document.getElementById('symbol').value = localStorage.getItem('symbol') || DEFAULT_SYMBOL
+document.getElementById('button').addEventListener('click', generateData)
 document.getElementById('openWindow').addEventListener('click', helpers.openWindow)
 
 const defaultTimeframes = ['1m', '3m', '5m', '15m', "30m", "1h"];
@@ -18,35 +22,40 @@ const defaultTimeframes = ['1m', '3m', '5m', '15m', "30m", "1h"];
 $(document).ready(function() {
     $('#timeframes').select2();
     $('#timeframes').val(defaultTimeframes).trigger('change');
+    generateData() // GENERATE DATA WHEN OPENING
 });
 
 setLoaderVisibility(false)
 
-
-async function generateCSV() {
+async function generateData() {
     clearTimeout(timeout)
     setLoaderVisibility(true)
 
     const datetimeValue = document.getElementById('datetime').value
     const symbol = document.getElementById('symbol').value
+    localStorage.setItem('symbol', symbol.toUpperCase())
     const count = document.getElementById('count').value
 
     const datetime =  datetimeValue? new Date(datetimeValue): new Date()
 
     const dataPromises = getTimeframesToGenerate().map(
         async timeframe => {
-            const candlesDataSource = await api.getCandleData(symbol, timeframe, 1500, undefined, datetime)
+            const candlesDataSource = await binanceAPI.getCandleData(symbol, timeframe, 1500, undefined, datetime)
 
-            getEmasToGenerate().forEach(ema => emaHelper.includeEmaValue(candlesDataSource, ema))
-            new Bollinger(candlesDataSource).includeBollingerBands(20)
+            getEmasToGenerate().forEach(ema => new Ema(candlesDataSource).includeEma(ema))
 
             candlesDataSource.reverse()
             
-            return {timeframe: getTimeframeMappings()[timeframe], candles: candlesDataSource}
+            return {timeframe: timeframes[timeframe], candles: candlesDataSource}
         }
     )
 
+    
     let data = (await Promise.all(dataPromises))
+    
+    const lastPrice = data[0].candles[0].close
+
+    setLastPriceTitle(lastPrice, symbol.toUpperCase())
 
     const headers = [
         'Time Frame'
@@ -55,6 +64,12 @@ async function generateCSV() {
     const maxTimeframeMinutes = data[0]?.timeframe?.minutes
 
     const lastBigCandleDatetime =  data[0]?.candles[count - 1].open_time
+
+    await templateHelper.preloadTemplates([
+        'emas-report/tooltip',
+        'emas-report/tooltip-cross',
+        'emas-report/tooltip-ema',
+    ])
 
     const rows = data.map(({timeframe, candles}, i) => {
         const lastIndex = candles.findIndex((c) => c.open_time < lastBigCandleDatetime)
@@ -112,9 +127,9 @@ async function generateCSV() {
             return diffPercents.reduce((a, b) => a + b, 0) / diffPercents.length;
         }
 
-        getEmasToGenerate().forEach(emaA => getEmasToGenerate().forEach(emaB => emaA < emaB? crosses.includeEmaCrosses(candles, emaA, emaB): null))
+        getEmasToGenerate().forEach(emaA => getEmasToGenerate().forEach(emaB => emaA < emaB? new Crosses(candles).includeEmaCrosses(emaA, emaB): null))
 
-        const crossesList = getEmasToGenerate().map(emaA => getEmasToGenerate().map(emaB => emaA < emaB? crosses.getCrosses(candles, emaA, emaB): []).flat()).flat() 
+        const crossesList = getEmasToGenerate().map(emaA => getEmasToGenerate().map(emaB => emaA < emaB? new Crosses(candles).getCrosses(emaA, emaB): []).flat()).flat() 
 
         const fisrtColspan = data[data.length - 1]?.candles?.filter((c) => c.open_time >= candles[0]?.open_time)?.length * data[data.length - 1]?.timeframe?.minutes
         
@@ -127,22 +142,17 @@ async function generateCSV() {
 
             const emaValuesOrdered = [...expansionOrder].sort((emaA, emaB) =>  Number(candle[`ema${emaB}`] - Number(candle[`ema${emaA}`])))
 
-            const tooltip = `
-                <div style="text-align: center;">${candle.open_time.toTimeString().slice(0, 5)}</div>
-                <br>
-                Close: <b style="color: ${candle.close > candles.at(i + 1)?.close ? colorGradient(1) : colorGradient(0)}"> ${candle.close}</b>
-                <br><br>
-                ${crossesCandle.length > 0? `
-                    Crosses:
-                    <ul>
-                    ${crossesCandle.map(cross => `<li class="cross-${cross.swingType}"><b>${cross.emaA} ${cross.swingType == 'up'? '↑': '↓'} ${cross.emaB} </b> <span style="color: black">→ ${castDecimal(cross.crossPrice)}</span></li>`).join('')}
-                    </ul>
-                `: ''}
-                EMAs:
-                <ul>
-                    ${emaValuesOrdered.map(ema => `<li>${ema} → ${castDecimal(candle[`ema${ema}`])}</li>`).join('')}
-                </ul>
-            `
+            const tooltip = templateHelper.render(
+                'emas-report/tooltip', 
+                {
+                    openTime: candle.open_time.toTimeString().slice(0, 5), 
+                    closePrice: helpers.castDecimal(candle.close),
+                    closeColor: candle.close > candles.at(i + 1)?.close ? colorGradient(1) : colorGradient(0), 
+                    crossesCandle, 
+                    candle, 
+                    emaValuesOrdered
+                }
+            )
 
             return ({
                 value: crossesCandle.length > 0? crossesCandle.map(crossCandle => `<span class="cross-${crossCandle.swingType}">${crossCandle.emaA} ${crossCandle.swingType == 'up'? '↑': '↓'} ${crossCandle.emaB}</span>`).join('<br>'): ' ',
@@ -197,7 +207,7 @@ async function generateCSV() {
     tableBody.innerHTML = body
     setLoaderVisibility(false)
 
-    timeout = setTimeout(generateCSV, 5000)
+    timeout = setTimeout(generateData, AUTO_REFRESH_TIME * 1000)
 }
 
 function getEmasToGenerate() {
@@ -218,42 +228,26 @@ function setLoaderVisibility(visible) {
     visible? document.getElementById('loader').classList.remove("hidden"): document.getElementById('loader').classList.add("hidden")
 }
 
+function setLastPriceTitle(price, symbol) {
+    const $el = document.querySelector('#lastPrice')
+
+    $el.innerHTML = `<span>${symbol}</span> ${castDecimal(price)}`
+}
+
 // Gradient Function
 function colorGradient(percentage) {
 
-    let color1 = {
+    const color1 = {
     red: 255, green: 105, blue: 105
     };
-    let color2 = {
+    const color2 = {
         red: 245, green: 233, blue: 130
     };
-    let color3 = {
+    const color3 = {
         red: 99, green: 190, blue: 123
     };
-    var fade = percentage;
-
-    // Do we have 3 colors for the gradient? Need to adjust the params.
-    if (color3) {
-      fade = fade * 2;
-
-      // Find which interval to use and adjust the fade percentage
-      if (fade >= 1) {
-        fade -= 1;
-        color1 = color2;
-        color2 = color3;
-      }
-    }
-
-    var diffRed = color2.red - color1.red;
-    var diffGreen = color2.green - color1.green;
-    var diffBlue = color2.blue - color1.blue;
-
-    var gradient = {
-      red: parseInt(Math.floor(color1.red + (diffRed * fade)), 10),
-      green: parseInt(Math.floor(color1.green + (diffGreen * fade)), 10),
-      blue: parseInt(Math.floor(color1.blue + (diffBlue * fade)), 10),
-    };
-    return 'rgb(' + gradient.red + ',' + gradient.green + ',' + gradient.blue + ')';
+    
+    return helpers.colorGradient(percentage, color1, color2, color3)
 }
 
 function getTimeframeMappings() {
@@ -301,8 +295,10 @@ function getTimeframeMappings() {
     }
 }
 
-function castDecimal(value, decimals) {
-    decimals = decimals !== undefined? decimals: value > 10? 2: 4
+function castDecimal(value, decimals = (value > 10 ? 2: 4)) {
+    if(value % 1 == 0) {
+        return value
+    }
     return `${value.toFixed(decimals)}`.replace('.', ',')
 }
 

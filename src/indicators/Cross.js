@@ -5,7 +5,6 @@ export default class Cross {
     datetime
     crossPrice
 
-
     constructor(candleBefore, candleDataSource, emaA, emaB) {
         this.candleBefore = candleBefore
         this.candleDataSource = candleDataSource
@@ -84,7 +83,4 @@ export default class Cross {
 
         this.timeframe = (days? days + "d": "") + (hours? hours + "h": "") + (minutes? minutes + "m": "");
     }
-
-
-
 }

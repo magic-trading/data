@@ -1,26 +1,30 @@
-class Ema {
+export default class Ema {
 
-    calculateEma(period, i, candleDataArray) {
-        const previousEma = i >= period? candleDataArray[i - 1][`ema${period}`] : this.calculateSma(period, i, candleDataArray)
+    constructor(candlesData) {
+        this.candlesData = candlesData;
+    }
+
+    calculateEma(period, i) {
+        const previousEma = i >= period? this.candlesData[i - 1][`ema${period}`] : this.calculateSma(period, i)
 
         if(!previousEma) return null
 
         const k = 2 / (period + 1)
 
-        const currentPrice = candleDataArray[i].close
+        const currentPrice = this.candlesData[i].close
 
         const ema = k*(currentPrice - previousEma) + previousEma
 
         return ema
     }
 
-    calculateSma(period, i, candleDataArray) {
+    calculateSma(period, i) {
         if(i < period - 1) return null
 
         let total = 0
 
         for (let index = 0; index < i; index++) {
-            const candleData = candleDataArray[index]
+            const candleData = this.candlesData[index]
 
             total += candleData.close
         }
@@ -28,9 +32,9 @@ class Ema {
         return total / period
     }
 
-    includeEmaValue(candleDataArray, period) {
-        candleDataArray.forEach((candleData, i) => {
-            candleData[`ema${period}`] = this.calculateEma(period, i, candleDataArray)
+    includeEma(period) {
+        this.candlesData.forEach((candleData, i) => {
+            candleData[`ema${period}`] = this.calculateEma(period, i)
         })
     }
 
@@ -45,7 +49,3 @@ class Ema {
         return py;
     }
 }
-
-
-
-export default new Ema()

@@ -6,6 +6,15 @@
   font-weight: bold;
 }
 
+#lastPrice {
+  color: #3a469d;
+  margin: auto 30px;
+}
+
+#lastPrice>span {
+  font-size: small;
+}
+
 span.cross-up,
 span.cross-down {
   font-size: 14px;

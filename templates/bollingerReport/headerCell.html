@@ -1,0 +1,12 @@
+<th 
+    scope="col" 
+    colspan="[firstRow.at($.i).colspan]">
+    <div style="position: relative; [$.i > 0 && 'font-size: 13px; font-weight: 300;']">
+        <div class="[$.i == 1 && 'timetag']" style="right: calc(100% - 50px)"> 
+            [$.i == 0? $.header: $.i == 1? $.maxTimeframeMinutes <= 60? new Date().toTimeString().slice(0, 5): new Date().toLocaleString(): '']
+        </div>
+        <div class="[$.i != 0 && $.i != $.headers.length - 1 && 'timetag']"> 
+            [$.i == 0 || $.i == $.headers.length - 1? "": $.maxTimeframeMinutes <= 60? $.firstRow.at($.i).openTime.toTimeString().slice(0, 5): $.firstRow.at($.i).openTime.toLocaleString()]
+        </div>
+    </div>
+</th>

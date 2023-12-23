@@ -1,0 +1,16 @@
+<div>
+    <div style="text-align: center;">[openTime]</div>
+    <br>
+    Close: <b style="color: [closeColor]">[closePrice]</b>
+    <br><br>
+    [$.crossesCandle.length > 0? `
+        Crosses:
+        <ul>
+        ${_.renderEach($.crossesCandle, 'emas-report/tooltip-cross', 'cross')}
+        </ul>
+    `: '']
+    EMAs:
+    <ul>
+        [_.renderEach($.emaValuesOrdered, 'emas-report/tooltip-ema', 'ema', {candle: $.candle})]
+    </ul>
+</div>

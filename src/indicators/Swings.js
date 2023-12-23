@@ -1,4 +1,4 @@
-import helpers from "./helpers.js"
+import helpers from "../helpers/helpers.js"
 
 class Swings {
 
