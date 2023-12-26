@@ -7,9 +7,12 @@ Router.renderNavbar();
 const bollingerReport = new BollingerReport();
 
 const AUTO_REFRESH_TIME = 5; // seconds
+const DEFAULT_SYMBOL = 'BTCUSDT'
+
 
 let timeout = 0;
 
+document.getElementById('symbol').value = localStorage.getItem('symbol') || DEFAULT_SYMBOL
 document.getElementById('button').addEventListener('click', generateData)
 document.getElementById('openWindow').addEventListener('click', helpers.openWindow)
 
@@ -18,6 +21,7 @@ const defaultTimeframes = ['1m', '3m', '5m', '15m', "30m", "1h"];
 $(document).ready(function() {
     $('#timeframes').select2();
     $('#timeframes').val(defaultTimeframes).trigger('change');
+    generateData()
 });
 
 setLoaderVisibility(false)
@@ -29,6 +33,7 @@ async function generateData() {
 
     const datetimeValue = document.getElementById('datetime').value
     const symbol = document.getElementById('symbol').value
+    localStorage.setItem('symbol', symbol.toUpperCase())
     const count = document.getElementById('count').value
 
     const datetime =  datetimeValue? new Date(datetimeValue): new Date()

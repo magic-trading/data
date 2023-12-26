@@ -1,6 +1,6 @@
-import binanceAPI from "../api/binanceAPI.js";
+import binanceAPI from "../api/BinanceAPI.js";
 import timeframes from "../config/timeframes.js";
-import Bollinger from "../indicators/bollinger.js";
+import Bollinger from "../indicators/Bollinger.js";
 
 class BollingerReport {
 
