@@ -150,7 +150,9 @@ async function generateData() {
                     closeColor: candle.close > candles.at(i + 1)?.close ? colorGradient(1) : colorGradient(0), 
                     crossesCandle, 
                     candle, 
-                    emaValuesOrdered
+                    emaValuesOrdered,
+                    openPrice: helpers.castDecimal(candle.open),
+                    openColor: candle.open > candles.at(i + 1)?.open ? colorGradient(1) : colorGradient(0),
                 }
             )
 
